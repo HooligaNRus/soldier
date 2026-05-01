@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Снаряжение Солдата</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Raleway:wght@300;400;500&display=swap');
+
+:root {
+–bg: #1a1c14;
+–panel: #23271a;
+–border: #3a4028;
+–accent: #8a9a3c;
+–accent2: #c8a227;
+–text: #d4d9b8;
+–muted: #6b7355;
+–highlight: #b5c44a;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Raleway’, sans-serif;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+overflow-x: hidden;
+}
+
+/* BG texture */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(138,154,60,0.04) 39px, rgba(138,154,60,0.04) 40px),
+repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(138,154,60,0.04) 39px, rgba(138,154,60,0.04) 40px);
+pointer-events: none;
+z-index: 0;
+}
+
+header {
+position: relative;
+z-index: 10;
+padding: 18px 40px;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+gap: 16px;
+background: rgba(26,28,20,0.95);
+backdrop-filter: blur(8px);
+}
+
+.star { color: var(–accent2); font-size: 20px; }
+header h1 {
+font-family: ‘Oswald’, sans-serif;
+font-size: 22px;
+font-weight: 700;
+letter-spacing: 4px;
+text-transform: uppercase;
+color: var(–text);
+}
+header span {
+font-size: 11px;
+letter-spacing: 3px;
+color: var(–muted);
+text-transform: uppercase;
+margin-left: auto;
+}
+
+.main {
+position: relative;
+z-index: 1;
+flex: 1;
+display: flex;
+gap: 0;
+min-height: calc(100vh - 62px);
+}
+
+/* LEFT PANEL - gear slots */
+.gear-panel {
+width: 280px;
+min-width: 260px;
+border-right: 1px solid var(–border);
+padding: 28px 20px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+background: rgba(35,39,26,0.6);
+}
+
+.gear-panel h2 {
+font-family: ‘Oswald’, sans-serif;
+font-size: 13px;
+letter-spacing: 4px;
+color: var(–muted);
+text-transform: uppercase;
+padding-bottom: 8px;
+border-bottom: 1px solid var(–border);
+}
+
+.slot-group { display: flex; flex-direction: column; gap: 10px; }
+.slot-label {
+font-size: 10px;
+letter-spacing: 3px;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+
+.gear-options {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.gear-btn {
+position: relative;
+width: 74px;
+height: 74px;
+border: 1.5px solid var(–border);
+border-radius: 6px;
+background: var(–panel);
+cursor: pointer;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 4px;
+transition: border-color 0.2s, background 0.2s, transform 0.15s;
+overflow: hidden;
+padding: 6px;
+}
+
+.gear-btn:hover {
+border-color: var(–accent);
+background: #2d3420;
+transform: translateY(-2px);
+}
+
+.gear-btn.active {
+border-color: var(–highlight);
+background: #2a3018;
+box-shadow: 0 0 12px rgba(181,196,74,0.2);
+}
+
+.gear-btn svg { width: 38px; height: 38px; }
+.gear-btn span {
+font-size: 9px;
+letter-spacing: 1px;
+color: var(–muted);
+text-align: center;
+text-transform: uppercase;
+}
+.gear-btn.active span { color: var(–highlight); }
+
+.gear-btn .check {
+position: absolute;
+top: 4px; right: 4px;
+width: 12px; height: 12px;
+background: var(–highlight);
+border-radius: 50%;
+display: none;
+align-items: center;
+justify-content: center;
+font-size: 8px;
+color: #1a1c14;
+}
+.gear-btn.active .check { display: flex; }
+
+/* CENTER - soldier */
+.soldier-area {
+flex: 1;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 40px 20px;
+position: relative;
+}
+
+.soldier-stage {
+position: relative;
+width: 340px;
+height: 560px;
+}
+
+.soldier-stage svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+.layer {
+position: absolute;
+top: 0; left: 0;
+width: 100%; height: 100%;
+opacity: 0;
+transition: opacity 0.35s ease;
+pointer-events: none;
+}
+.layer.visible { opacity: 1; }
+
+/* ground shadow */
+.soldier-shadow {
+position: absolute;
+bottom: -12px;
+left: 50%;
+transform: translateX(-50%);
+width: 120px;
+height: 20px;
+background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%);
+}
+
+.gear-name {
+position: absolute;
+bottom: -50px;
+left: 50%;
+transform: translateX(-50%);
+font-family: ‘Oswald’, sans-serif;
+font-size: 13px;
+letter-spacing: 4px;
+color: var(–accent);
+text-transform: uppercase;
+white-space: nowrap;
+opacity: 0;
+transition: opacity 0.3s;
+}
+.gear-name.show { opacity: 1; }
+
+/* RIGHT info panel */
+.info-panel {
+width: 220px;
+min-width: 200px;
+border-left: 1px solid var(–border);
+padding: 28px 18px;
+background: rgba(35,39,26,0.6);
+display: flex;
+flex-direction: column;
+gap: 18px;
+}
+
+.info-panel h2 {
+font-family: ‘Oswald’, sans-serif;
+font-size: 13px;
+letter-spacing: 4px;
+color: var(–muted);
+text-transform: uppercase;
+padding-bottom: 8px;
+border-bottom: 1px solid var(–border);
+}
+
+.stat-row {
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+.stat-name {
+font-size: 9px;
+letter-spacing: 2px;
+color: var(–muted);
+text-transform: uppercase;
+}
+.stat-bar-wrap {
+height: 4px;
+background: var(–border);
+border-radius: 2px;
+overflow: hidden;
+}
+.stat-bar {
+height: 100%;
+background: var(–accent);
+border-radius: 2px;
+transition: width 0.5s ease;
+}
+.stat-val {
+font-family: ‘Oswald’, sans-serif;
+font-size: 11px;
+color: var(–text);
+text-align: right;
+margin-top: 2px;
+}
+
+.equipped-list {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.eq-item {
+font-size: 11px;
+color: var(–text);
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 6px 8px;
+background: rgba(138,154,60,0.08);
+border-radius: 4px;
+border-left: 2px solid var(–accent);
+transition: all 0.3s;
+}
+.eq-item.empty {
+color: var(–muted);
+border-left-color: var(–border);
+background: transparent;
+}
+.eq-dot {
+width: 6px; height: 6px;
+border-radius: 50%;
+background: var(–accent);
+flex-shrink: 0;
+}
+.eq-item.empty .eq-dot { background: var(–border); }
+
+.reset-btn {
+margin-top: auto;
+padding: 10px;
+background: transparent;
+border: 1px solid var(–border);
+color: var(–muted);
+font-family: ‘Oswald’, sans-serif;
+font-size: 12px;
+letter-spacing: 3px;
+text-transform: uppercase;
+cursor: pointer;
+border-radius: 4px;
+transition: all 0.2s;
+}
+.reset-btn:hover {
+border-color: var(–accent2);
+color: var(–accent2);
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: none; } }
+.soldier-stage { animation: fadeIn 0.6s ease; }
+
+</style>
+</head>
+<body>
+
+<header>
+<span class="star">★</span>
+<h1>Снаряжение Бойца</h1>
+<span>Экипировка · РФ</span>
+</header>
+
+<div class="main">
+<!-- LEFT PANEL -->
+<div class="gear-panel">
+<h2>Снаряжение</h2>
+
+```
+<!-- HELMET -->
+<div class="slot-group">
+<div class="slot-label">Шлем</div>
+<div class="gear-options" id="helmet-options">
+<button class="gear-btn active" data-slot="helmet" data-val="none" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<circle cx="19" cy="19" r="14" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<line x1="12" y1="12" x2="26" y2="26" stroke="var(--muted)" stroke-width="1.5"/>
+</svg>
+<span>Нет</span>
+</button>
+<button class="gear-btn" data-slot="helmet" data-val="ssh68" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M7 22 Q7 10 19 9 Q31 10 31 22 L29 26 Q19 28 9 26 Z" fill="#5a6040" stroke="#7a8a55" stroke-width="1"/>
+<path d="M9 24 Q19 26.5 29 24" stroke="#6b7a48" stroke-width="1.5" fill="none"/>
+<ellipse cx="19" cy="22" rx="12" ry="5" fill="none" stroke="#4a5535" stroke-width="0.8"/>
+</svg>
+<span>СШ-68</span>
+</button>
+<button class="gear-btn" data-slot="helmet" data-val="ratnik" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M6 21 Q6 9 19 8 Q32 9 32 21 L30 26 Q19 29 8 26 Z" fill="#3d4530" stroke="#5a6840" stroke-width="1"/>
+<rect x="8" y="22" width="22" height="3" rx="1.5" fill="#2d3525" stroke="#4a5535" stroke-width="0.8"/>
+<path d="M11 15 L15 12 M23 12 L27 15" stroke="#6b7548" stroke-width="1"/>
+</svg>
+<span>Ратник</span>
+</button>
+</div>
+</div>
+
+<!-- VEST -->
+<div class="slot-group">
+<div class="slot-label">Бронежилет</div>
+<div class="gear-options" id="vest-options">
+<button class="gear-btn active" data-slot="vest" data-val="none" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<circle cx="19" cy="19" r="14" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<line x1="12" y1="12" x2="26" y2="26" stroke="var(--muted)" stroke-width="1.5"/>
+</svg>
+<span>Нет</span>
+</button>
+<button class="gear-btn" data-slot="vest" data-val="6b2" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M10 10 L10 30 Q10 32 12 32 L26 32 Q28 32 28 30 L28 10 Q24 7 19 7 Q14 7 10 10Z" fill="#6b7548" stroke="#8a9a60" stroke-width="1"/>
+<line x1="19" y1="10" x2="19" y2="32" stroke="#4a5535" stroke-width="1.2"/>
+<rect x="13" y="16" width="5" height="6" rx="1" fill="#4a5535" stroke="#3d4528" stroke-width="0.8"/>
+<rect x="20" y="16" width="5" height="6" rx="1" fill="#4a5535" stroke="#3d4528" stroke-width="0.8"/>
+</svg>
+<span>6Б2</span>
+</button>
+<button class="gear-btn" data-slot="vest" data-val="6b45" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M9 9 L9 31 Q9 33 11 33 L27 33 Q29 33 29 31 L29 9 Q24 6 19 6 Q14 6 9 9Z" fill="#3d4530" stroke="#5a6840" stroke-width="1"/>
+<path d="M9 16 L5 20 L5 26 L9 28" fill="#3d4530" stroke="#5a6840" stroke-width="0.8"/>
+<path d="M29 16 L33 20 L33 26 L29 28" fill="#3d4530" stroke="#5a6840" stroke-width="0.8"/>
+<line x1="19" y1="9" x2="19" y2="33" stroke="#2d3525" stroke-width="1.2"/>
+<rect x="12" y="18" width="6" height="7" rx="1" fill="#2d3520" stroke="#4a5535" stroke-width="0.8"/>
+<rect x="20" y="18" width="6" height="7" rx="1" fill="#2d3520" stroke="#4a5535" stroke-width="0.8"/>
+</svg>
+<span>6Б45</span>
+</button>
+</div>
+</div>
+
+<!-- PANTS -->
+<div class="slot-group">
+<div class="slot-label">Брюки</div>
+<div class="gear-options" id="pants-options">
+<button class="gear-btn active" data-slot="pants" data-val="none" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<circle cx="19" cy="19" r="14" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<line x1="12" y1="12" x2="26" y2="26" stroke="var(--muted)" stroke-width="1.5"/>
+</svg>
+<span>Нет</span>
+</button>
+<button class="gear-btn" data-slot="pants" data-val="camo" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M11 8 L27 8 L30 28 L22 28 L19 20 L16 28 L8 28 Z" fill="#6b7548" stroke="#8a9a60" stroke-width="1"/>
+<path d="M14 10 Q12 15 13 20" stroke="#4a5535" stroke-width="1.5" fill="none"/>
+<path d="M24 10 Q26 15 25 20" stroke="#4a5535" stroke-width="1.5" fill="none"/>
+<ellipse cx="13" cy="14" rx="2" ry="3" fill="#5a6840" opacity="0.7"/>
+<ellipse cx="24" cy="18" rx="2" ry="2" fill="#4a5535" opacity="0.7"/>
+</svg>
+<span>Камуфляж</span>
+</button>
+<button class="gear-btn" data-slot="pants" data-val="digital" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M11 8 L27 8 L30 28 L22 28 L19 20 L16 28 L8 28 Z" fill="#4a5840" stroke="#6a7a58" stroke-width="1"/>
+<!-- digital camo pattern -->
+<rect x="12" y="11" width="3" height="2" fill="#5a6848" opacity="0.9"/>
+<rect x="17" y="13" width="4" height="2" fill="#3a4830" opacity="0.9"/>
+<rect x="22" y="10" width="3" height="3" fill="#6a7a58" opacity="0.9"/>
+<rect x="13" y="17" width="4" height="2" fill="#3a4830" opacity="0.9"/>
+<rect x="20" y="19" width="3" height="2" fill="#6a7a58" opacity="0.9"/>
+<rect x="14" y="22" width="3" height="2" fill="#4a5840" opacity="0.9"/>
+</svg>
+<span>Цифра</span>
+</button>
+</div>
+</div>
+
+<!-- BOOTS -->
+<div class="slot-group">
+<div class="slot-label">Обувь</div>
+<div class="gear-options" id="boots-options">
+<button class="gear-btn active" data-slot="boots" data-val="none" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<circle cx="19" cy="19" r="14" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<line x1="12" y1="12" x2="26" y2="26" stroke="var(--muted)" stroke-width="1.5"/>
+</svg>
+<span>Нет</span>
+</button>
+<button class="gear-btn" data-slot="boots" data-val="kirza" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M10 8 L10 26 Q10 30 14 31 L28 31 Q30 31 30 29 L30 28 Q30 26 28 26 L16 26 L16 8 Z" fill="#2a2a22" stroke="#404038" stroke-width="1"/>
+<path d="M16 26 L28 26 Q30 26 30 28" stroke="#1a1a16" stroke-width="1.5" fill="none"/>
+<line x1="12" y1="14" x2="15" y2="14" stroke="#404038" stroke-width="0.8"/>
+<line x1="12" y1="17" x2="15" y2="17" stroke="#404038" stroke-width="0.8"/>
+<line x1="12" y1="20" x2="15" y2="20" stroke="#404038" stroke-width="0.8"/>
+</svg>
+<span>Кирзачи</span>
+</button>
+<button class="gear-btn" data-slot="boots" data-val="tactical" onclick="selectGear(this)">
+<div class="check">✓</div>
+<svg viewBox="0 0 38 38" fill="none">
+<path d="M9 8 L9 25 Q9 29 13 30 L27 30 Q30 30 30 28 L30 27 Q30 25 27 25 L15 25 L15 8 Z" fill="#3a3830" stroke="#5a5848" stroke-width="1"/>
+<rect x="9" y="20" width="6" height="5" rx="1" fill="#2a2820" stroke="#4a4838" stroke-width="0.8"/>
+<path d="M15 25 L27 25 Q30 25 30 27" stroke="#2a2820" stroke-width="1.5" fill="none"/>
+<!-- laces -->
+<line x1="11" y1="12" x2="14" y2="12" stroke="#7a7868" stroke-width="0.8"/>
+<line x1="11" y1="15" x2="14" y2="15" stroke="#7a7868" stroke-width="0.8"/>
+<line x1="11" y1="18" x2="14" y2="18" stroke="#7a7868" stroke-width="0.8"/>
+</svg>
+<span>Тактические</span>
+</button>
+</div>
+</div>
+```
+
+</div>
+
+<!-- CENTER -->
+
+<div class="soldier-area">
+<div class="soldier-stage" id="stage">
+
+```
+<!-- BASE SOLDIER (always visible) -->
+<svg viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;width:100%;height:100%;">
+<!-- Ground -->
+<ellipse cx="170" cy="545" rx="70" ry="10" fill="rgba(0,0,0,0.35)"/>
+
+<!-- LEGS base (trousers default - olive) -->
+<g id="base-pants">
+<!-- left leg -->
+<path d="M135 310 L125 480 Q124 490 130 492 L150 492 Q155 492 156 488 L160 360" fill="#6b7548" stroke="#5a6438" stroke-width="1.5"/>
+<!-- right leg -->
+<path d="M205 310 L215 480 Q216 490 210 492 L190 492 Q185 492 184 488 L180 360" fill="#6b7548" stroke="#5a6438" stroke-width="1.5"/>
+<!-- crotch -->
+<path d="M135 310 Q160 330 170 330 Q180 330 205 310 L200 300 Q170 315 140 300 Z" fill="#6b7548"/>
+<!-- knee pads subtle -->
+<ellipse cx="132" cy="400" rx="10" ry="12" fill="#5a6438" stroke="#4a5530" stroke-width="1"/>
+<ellipse cx="208" cy="400" rx="10" ry="12" fill="#5a6438" stroke="#4a5530" stroke-width="1"/>
+</g>
+
+<!-- BASE BOOTS -->
+<g id="base-boots">
+<path d="M124 480 L122 510 Q121 518 128 520 L155 520 Q160 520 160 516 L160 510 L150 492 Z" fill="#3a3830" stroke="#2a2820" stroke-width="1.5"/>
+<path d="M122 513 L155 513" stroke="#2a2820" stroke-width="1.5"/>
+<path d="M216 480 L218 510 Q219 518 212 520 L185 520 Q180 520 180 516 L180 510 L190 492 Z" fill="#3a3830" stroke="#2a2820" stroke-width="1.5"/>
+<path d="M218 513 L185 513" stroke="#2a2820" stroke-width="1.5"/>
+</g>
+
+<!-- BODY / TORSO (uniform jacket) -->
+<path d="M120 180 L100 290 Q98 310 110 315 L135 315 Q140 315 140 310 L140 305 L170 305 L200 305 L200 310 Q200 315 205 315 L230 315 Q242 315 240 290 L220 180 Q200 165 170 163 Q140 165 120 180Z" fill="#6b7548" stroke="#5a6438" stroke-width="1.5"/>
+
+<!-- Jacket details -->
+<line x1="170" y1="175" x2="170" y2="305" stroke="#5a6438" stroke-width="1.5"/>
+<!-- pockets -->
+<rect x="125" y="210" width="28" height="22" rx="2" fill="#5a6438" stroke="#4a5530" stroke-width="1"/>
+<rect x="187" y="210" width="28" height="22" rx="2" fill="#5a6438" stroke="#4a5530" stroke-width="1"/>
+<rect x="128" y="255" width="24" height="20" rx="2" fill="#5a6438" stroke="#4a5530" stroke-width="1"/>
+<rect x="188" y="255" width="24" height="20" rx="2" fill="#5a6438" stroke="#4a5530" stroke-width="1"/>
+
+<!-- ARMS -->
+<!-- left arm -->
+<path d="M120 185 L95 260 Q92 270 96 278 L106 278 Q112 278 114 270 L138 195 Z" fill="#6b7548" stroke="#5a6438" stroke-width="1.5"/>
+<!-- left hand -->
+<path d="M96 275 L92 300 Q91 308 97 310 L108 310 Q114 308 113 300 L110 275 Z" fill="#c4956a" stroke="#b08050" stroke-width="1.2"/>
+<!-- right arm -->
+<path d="M220 185 L245 260 Q248 270 244 278 L234 278 Q228 278 226 270 L202 195 Z" fill="#6b7548" stroke="#5a6438" stroke-width="1.5"/>
+<!-- right hand -->
+<path d="M244 275 L248 300 Q249 308 243 310 L232 310 Q226 308 227 300 L230 275 Z" fill="#c4956a" stroke="#b08050" stroke-width="1.2"/>
+
+<!-- Sleeve patches -->
+<rect x="98" y="220" width="20" height="14" rx="2" fill="#4a5530" stroke="#6a7a48" stroke-width="0.8"/>
+<path d="M100 226 L114 226" stroke="#7a9040" stroke-width="1"/>
+
+<!-- NECK -->
+<rect x="158" y="150" width="24" height="20" rx="4" fill="#c4956a" stroke="#b08050" stroke-width="1.2"/>
+
+<!-- HEAD -->
+<ellipse cx="170" cy="130" rx="38" ry="44" fill="#c4956a" stroke="#b08050" stroke-width="1.5"/>
+<!-- Face details -->
+<!-- eyes -->
+<ellipse cx="157" cy="122" rx="5" ry="5.5" fill="#fff" stroke="#b08050" stroke-width="0.8"/>
+<ellipse cx="183" cy="122" rx="5" ry="5.5" fill="#fff" stroke="#b08050" stroke-width="0.8"/>
+<ellipse cx="158" cy="123" rx="3" ry="3.5" fill="#3d2a1a"/>
+<ellipse cx="184" cy="123" rx="3" ry="3.5" fill="#3d2a1a"/>
+<circle cx="159" cy="122" r="1" fill="#fff"/>
+<circle cx="185" cy="122" r="1" fill="#fff"/>
+<!-- eyebrows -->
+<path d="M151 115 Q157 112 163 115" stroke="#4a3020" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<path d="M177 115 Q183 112 189 115" stroke="#4a3020" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<!-- nose -->
+<path d="M168 127 Q166 134 168 137 Q170 138 172 137 Q174 134 172 127" fill="#b8865a" stroke="#a07040" stroke-width="0.8"/>
+<!-- mouth -->
+<path d="M160 145 Q170 150 180 145" stroke="#8a5030" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<!-- ear -->
+<path d="M132 125 Q128 130 130 140 Q133 148 137 145 Q134 138 135 130 Z" fill="#c4956a" stroke="#b08050" stroke-width="1"/>
+<path d="M208 125 Q212 130 210 140 Q207 148 203 145 Q206 138 205 130 Z" fill="#c4956a" stroke="#b08050" stroke-width="1"/>
+<!-- jawline shadow -->
+<path d="M140 155 Q170 168 200 155" stroke="#a07040" stroke-width="1" fill="none" opacity="0.5"/>
+<!-- 5 o'clock shadow -->
+<path d="M148 148 Q170 158 192 148 Q190 163 170 167 Q150 163 148 148Z" fill="#8a6545" opacity="0.25"/>
+
+<!-- Hair -->
+<path d="M133 108 Q135 90 155 83 Q170 79 185 83 Q205 90 207 108" fill="#2a1a0a" stroke="#1a0a00" stroke-width="1"/>
+<path d="M132 115 Q130 100 135 90" fill="#2a1a0a" stroke="#1a0a00" stroke-width="1"/>
+<path d="M208 115 Q210 100 205 90" fill="#2a1a0a" stroke="#1a0a00" stroke-width="1"/>
+
+<!-- collar/shoulder straps -->
+<rect x="155" y="170" width="15" height="6" rx="2" fill="#5a6438" stroke="#7a8a50" stroke-width="0.8"/>
+<rect x="170" y="170" width="15" height="6" rx="2" fill="#5a6438" stroke="#7a8a50" stroke-width="0.8"/>
+<!-- rank star -->
+<text x="162" y="175" font-size="5" fill="var(--accent2)" text-anchor="middle">★</text>
+<text x="178" y="175" font-size="5" fill="var(--accent2)" text-anchor="middle">★</text>
+
+<!-- Belt -->
+<rect x="120" y="295" width="100" height="12" rx="2" fill="#3a3020" stroke="#5a5040" stroke-width="1"/>
+<rect x="163" y="294" width="14" height="14" rx="2" fill="#8a7a30" stroke="#a8a040" stroke-width="1"/>
+<rect x="166" y="297" width="8" height="8" rx="1" fill="#c8b840" stroke="#a8a030" stroke-width="0.5"/>
+</svg>
+
+<!-- HELMET LAYERS -->
+<svg class="layer" id="helmet-ssh68" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M130 108 Q130 68 170 63 Q210 68 210 108 L206 124 Q170 130 134 124 Z" fill="#5a6040" stroke="#7a8a55" stroke-width="1.5"/>
+<path d="M130 115 Q170 122 210 115" stroke="#6b7848" stroke-width="2" fill="none"/>
+<ellipse cx="170" cy="112" rx="40" ry="20" fill="none" stroke="#4a5535" stroke-width="1"/>
+<!-- liner band -->
+<path d="M132 120 L136 128 Q170 133 204 128 L208 120 Q170 125 132 120Z" fill="#4a5030" stroke="#6a6838" stroke-width="0.8"/>
+</svg>
+
+<svg class="layer" id="helmet-ratnik" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M128 105 Q128 62 170 57 Q212 62 212 105 L208 122 Q170 130 132 122 Z" fill="#3d4530" stroke="#5a6840" stroke-width="1.5"/>
+<!-- padding rim -->
+<path d="M128 113 L132 124 Q170 130 208 124 L212 113 Q170 120 128 113Z" fill="#2d3525" stroke="#4a5535" stroke-width="1"/>
+<!-- night vision mount -->
+<rect x="158" y="63" width="24" height="14" rx="3" fill="#2a3020" stroke="#4a5535" stroke-width="1"/>
+<circle cx="170" cy="70" r="4" fill="#1a2010" stroke="#3a4530" stroke-width="1"/>
+<!-- ear covers -->
+<path d="M128 100 Q122 108 124 118 L130 116 Q128 108 130 100Z" fill="#3d4530" stroke="#5a6840" stroke-width="1"/>
+<path d="M212 100 Q218 108 216 118 L210 116 Q212 108 210 100Z" fill="#3d4530" stroke="#5a6840" stroke-width="1"/>
+<!-- chin strap -->
+<path d="M134 126 Q170 135 206 126 Q200 140 170 144 Q140 140 134 126Z" stroke="#4a5535" stroke-width="1" fill="none"/>
+</svg>
+
+<!-- VEST LAYERS -->
+<svg class="layer" id="vest-6b2" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- main body -->
+<path d="M115 178 L92 295 Q90 315 105 320 L135 320 Q142 320 142 312 L142 308 L170 308 L198 308 L198 312 Q198 320 205 320 L235 320 Q250 315 248 295 L225 178 Q205 163 170 161 Q135 163 115 178Z" fill="#7a8855" stroke="#9aa870" stroke-width="1.5"/>
+<!-- front plates -->
+<rect x="130" y="195" width="38" height="50" rx="3" fill="#6a7848" stroke="#8a9860" stroke-width="1.2"/>
+<rect x="172" y="195" width="38" height="50" rx="3" fill="#6a7848" stroke="#8a9860" stroke-width="1.2"/>
+<!-- center zip -->
+<line x1="170" y1="178" x2="170" y2="308" stroke="#5a6840" stroke-width="2"/>
+<!-- molle straps -->
+<line x1="130" y1="255" x2="208" y2="255" stroke="#5a6838" stroke-width="1.2"/>
+<line x1="130" y1="265" x2="208" y2="265" stroke="#5a6838" stroke-width="1.2"/>
+<line x1="130" y1="275" x2="208" y2="275" stroke="#5a6838" stroke-width="1.2"/>
+<!-- shoulder pads -->
+<path d="M115 180 L100 195 Q98 205 106 208 L120 202 L122 185Z" fill="#7a8855" stroke="#9aa870" stroke-width="1"/>
+<path d="M225 180 L240 195 Q242 205 234 208 L220 202 L218 185Z" fill="#7a8855" stroke="#9aa870" stroke-width="1"/>
+<!-- collar -->
+<path d="M145 178 Q170 172 195 178 Q188 190 170 192 Q152 190 145 178Z" fill="#8a9860" stroke="#9aaa70" stroke-width="1"/>
+</svg>
+
+<svg class="layer" id="vest-6b45" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- heavy plate carrier -->
+<path d="M112 178 L88 298 Q86 320 102 325 L135 325 Q143 325 143 315 L143 310 L170 310 L197 310 L197 315 Q197 325 205 325 L238 325 Q254 320 252 298 L228 178 Q205 162 170 160 Q135 162 112 178Z" fill="#3d4830" stroke="#5a6a40" stroke-width="1.5"/>
+<!-- side wings / cummerbund -->
+<path d="M112 220 L86 230 L86 280 L112 270 Z" fill="#3d4830" stroke="#5a6a40" stroke-width="1"/>
+<path d="M228 220 L254 230 L254 280 L228 270 Z" fill="#3d4830" stroke="#5a6a40" stroke-width="1"/>
+<!-- front plate -->
+<rect x="128" y="195" width="84" height="70" rx="4" fill="#2d3825" stroke="#4a5a35" stroke-width="1.5"/>
+<rect x="131" y="198" width="78" height="64" rx="3" fill="#353d2a" stroke="none"/>
+<!-- back plate indicator top -->
+<path d="M145 178 Q170 172 195 178 Q188 188 170 190 Q152 188 145 178Z" fill="#4a5838" stroke="#6a7a50" stroke-width="1"/>
+<!-- molle rows -->
+<line x1="128" y1="272" x2="212" y2="272" stroke="#2d3820" stroke-width="1.5"/>
+<line x1="128" y1="282" x2="212" y2="282" stroke="#2d3820" stroke-width="1.5"/>
+<line x1="128" y1="292" x2="212" y2="292" stroke="#2d3820" stroke-width="1.5"/>
+<!-- pouches -->
+<rect x="133" y="273" width="14" height="28" rx="2" fill="#2d3820" stroke="#4a5838" stroke-width="0.8"/>
+<rect x="150" y="273" width="14" height="28" rx="2" fill="#2d3820" stroke="#4a5838" stroke-width="0.8"/>
+<rect x="193" y="273" width="14" height="28" rx="2" fill="#2d3820" stroke="#4a5838" stroke-width="0.8"/>
+<!-- radio pouch -->
+<rect x="88" y="235" width="20" height="35" rx="2" fill="#2d3820" stroke="#4a5838" stroke-width="0.8"/>
+<!-- collar up -->
+<path d="M145 175 L148 162 Q170 158 192 162 L195 175 Q183 168 170 167 Q157 168 145 175Z" fill="#3d4830" stroke="#5a6840" stroke-width="1"/>
+</svg>
+
+<!-- PANTS LAYERS -->
+<svg class="layer" id="pants-camo" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- cover default pants with camo overlay -->
+<!-- left leg -->
+<path d="M135 310 L125 480 Q124 490 130 492 L150 492 Q155 492 156 488 L160 360 Z" fill="#6b7548" stroke="#5a6438" stroke-width="1"/>
+<!-- right leg -->
+<path d="M205 310 L215 480 Q216 490 210 492 L190 492 Q185 492 184 488 L180 360 Z" fill="#6b7548" stroke="#5a6438" stroke-width="1"/>
+<path d="M135 310 Q160 330 170 330 Q180 330 205 310 L200 300 Q170 315 140 300 Z" fill="#6b7548"/>
+<!-- camo blotches left leg -->
+<ellipse cx="133" cy="340" rx="7" ry="12" fill="#3d4528" opacity="0.8"/>
+<ellipse cx="143" cy="370" rx="9" ry="6" fill="#8a9050" opacity="0.7"/>
+<ellipse cx="130" cy="410" rx="6" ry="10" fill="#3d4528" opacity="0.8"/>
+<ellipse cx="140" cy="440" rx="8" ry="5" fill="#8a9050" opacity="0.6"/>
+<ellipse cx="128" cy="460" rx="5" ry="8" fill="#3d4528" opacity="0.7"/>
+<!-- camo blotches right leg -->
+<ellipse cx="207" cy="340" rx="7" ry="12" fill="#3d4528" opacity="0.8"/>
+<ellipse cx="197" cy="370" rx="9" ry="6" fill="#8a9050" opacity="0.7"/>
+<ellipse cx="210" cy="410" rx="6" ry="10" fill="#3d4528" opacity="0.8"/>
+<ellipse cx="200" cy="440" rx="8" ry="5" fill="#8a9050" opacity="0.6"/>
+<ellipse cx="212" cy="460" rx="5" ry="8" fill="#3d4528" opacity="0.7"/>
+<!-- knee pads -->
+<ellipse cx="132" cy="400" rx="10" ry="12" fill="#4a5430" stroke="#3a4428" stroke-width="1"/>
+<ellipse cx="208" cy="400" rx="10" ry="12" fill="#4a5430" stroke="#3a4428" stroke-width="1"/>
+<!-- cargo pockets -->
+<rect x="120" y="345" width="18" height="22" rx="2" fill="#5a6438" stroke="#4a5428" stroke-width="0.8"/>
+<rect x="202" y="345" width="18" height="22" rx="2" fill="#5a6438" stroke="#4a5428" stroke-width="0.8"/>
+</svg>
+
+<svg class="layer" id="pants-digital" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- left leg base -->
+<path d="M135 310 L125 480 Q124 490 130 492 L150 492 Q155 492 156 488 L160 360 Z" fill="#4a5840" stroke="#5a6848" stroke-width="1"/>
+<!-- right leg -->
+<path d="M205 310 L215 480 Q216 490 210 492 L190 492 Q185 492 184 488 L180 360 Z" fill="#4a5840" stroke="#5a6848" stroke-width="1"/>
+<path d="M135 310 Q160 330 170 330 Q180 330 205 310 L200 300 Q170 315 140 300 Z" fill="#4a5840"/>
+<!-- digital camo pixels left -->
+<rect x="122" y="318" width="5" height="5" fill="#6a7858" opacity="0.9"/>
+<rect x="129" y="320" width="4" height="4" fill="#3a4830" opacity="0.9"/>
+<rect x="134" y="315" width="6" height="4" fill="#5a6848" opacity="0.9"/>
+<rect x="124" y="330" width="7" height="5" fill="#3a4830" opacity="0.9"/>
+<rect x="133" y="335" width="5" height="6" fill="#6a7858" opacity="0.9"/>
+<rect x="126" y="348" width="4" height="5" fill="#2a3820" opacity="0.9"/>
+<rect x="132" y="352" width="6" height="4" fill="#5a6848" opacity="0.9"/>
+<rect x="128" y="363" width="5" height="7" fill="#3a4830" opacity="0.9"/>
+<rect x="122" y="375" width="7" height="4" fill="#6a7858" opacity="0.9"/>
+<rect x="130" y="385" width="4" height="6" fill="#2a3820" opacity="0.9"/>
+<rect x="125" y="400" width="6" height="5" fill="#5a6848" opacity="0.9"/>
+<rect x="133" y="408" width="4" height="7" fill="#3a4830" opacity="0.9"/>
+<rect x="127" y="422" width="5" height="4" fill="#6a7858" opacity="0.9"/>
+<rect x="134" y="430" width="6" height="5" fill="#2a3820" opacity="0.9"/>
+<rect x="124" y="445" width="7" height="4" fill="#5a6848" opacity="0.9"/>
+<rect x="132" y="455" width="4" height="6" fill="#3a4830" opacity="0.9"/>
+<rect x="128" y="466" width="6" height="5" fill="#6a7858" opacity="0.9"/>
+<!-- digital pixels right -->
+<rect x="201" y="318" width="5" height="5" fill="#6a7858" opacity="0.9"/>
+<rect x="208" y="320" width="4" height="4" fill="#3a4830" opacity="0.9"/>
+<rect x="213" y="315" width="6" height="4" fill="#5a6848" opacity="0.9"/>
+<rect x="203" y="330" width="7" height="5" fill="#3a4830" opacity="0.9"/>
+<rect x="212" y="335" width="5" height="6" fill="#6a7858" opacity="0.9"/>
+<rect x="205" y="348" width="4" height="5" fill="#2a3820" opacity="0.9"/>
+<rect x="211" y="352" width="6" height="4" fill="#5a6848" opacity="0.9"/>
+<rect x="207" y="363" width="5" height="7" fill="#3a4830" opacity="0.9"/>
+<rect x="201" y="375" width="7" height="4" fill="#6a7858" opacity="0.9"/>
+<rect x="209" y="385" width="4" height="6" fill="#2a3820" opacity="0.9"/>
+<rect x="204" y="400" width="6" height="5" fill="#5a6848" opacity="0.9"/>
+<rect x="212" y="408" width="4" height="7" fill="#3a4830" opacity="0.9"/>
+<rect x="206" y="422" width="5" height="4" fill="#6a7858" opacity="0.9"/>
+<rect x="213" y="430" width="6" height="5" fill="#2a3820" opacity="0.9"/>
+<!-- knee pads tactical -->
+<ellipse cx="132" cy="400" rx="11" ry="13" fill="#2a3020" stroke="#3a4030" stroke-width="1.5"/>
+<ellipse cx="208" cy="400" rx="11" ry="13" fill="#2a3020" stroke="#3a4030" stroke-width="1.5"/>
+<!-- cargo pockets digital -->
+<rect x="119" y="343" width="19" height="24" rx="2" fill="#3a4830" stroke="#5a6848" stroke-width="0.8"/>
+<rect x="202" y="343" width="19" height="24" rx="2" fill="#3a4830" stroke="#5a6848" stroke-width="0.8"/>
+</svg>
+
+<!-- BOOTS LAYERS -->
+<svg class="layer" id="boots-kirza" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- left kirza boot -->
+<path d="M124 482 L120 516 Q119 524 127 526 L158 526 Q164 526 164 520 L164 515 L152 494 Z" fill="#1e1e18" stroke="#2e2e26" stroke-width="1.5"/>
+<path d="M119 518 L158 518" stroke="#111110" stroke-width="1.5"/>
+<!-- shaft wrinkles -->
+<path d="M127 488 Q124 498 125 508" stroke="#2e2e26" stroke-width="1" fill="none"/>
+<path d="M133 486 Q131 498 132 510" stroke="#2e2e26" stroke-width="1" fill="none"/>
+<!-- right kirza boot -->
+<path d="M216 482 L220 516 Q221 524 213 526 L182 526 Q176 526 176 520 L176 515 L188 494 Z" fill="#1e1e18" stroke="#2e2e26" stroke-width="1.5"/>
+<path d="M221 518 L182 518" stroke="#111110" stroke-width="1.5"/>
+<path d="M213 488 Q216 498 215 508" stroke="#2e2e26" stroke-width="1" fill="none"/>
+<path d="M207 486 Q209 498 208 510" stroke="#2e2e26" stroke-width="1" fill="none"/>
+</svg>
+
+<svg class="layer" id="boots-tactical" viewBox="0 0 340 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- left tactical boot -->
+<path d="M123 482 L119 514 Q118 522 126 524 L157 524 Q163 524 163 518 L163 512 L151 492 Z" fill="#2a2820" stroke="#3a3830" stroke-width="1.5"/>
+<!-- ankle padding -->
+<rect x="119" y="495" width="32" height="12" rx="3" fill="#222018" stroke="#3a3830" stroke-width="1"/>
+<path d="M119 518 L157 518" stroke="#1a1810" stroke-width="1.5"/>
+<!-- laces -->
+<line x1="124" y1="487" x2="134" y2="487" stroke="#5a5848" stroke-width="1"/>
+<line x1="122" y1="491" x2="133" y2="491" stroke="#5a5848" stroke-width="1"/>
+<line x1="121" y1="495" x2="132" y2="495" stroke="#5a5848" stroke-width="1"/>
+<!-- right tactical boot -->
+<path d="M217 482 L221 514 Q222 522 214 524 L183 524 Q177 524 177 518 L177 512 L189 492 Z" fill="#2a2820" stroke="#3a3830" stroke-width="1.5"/>
+<rect x="189" y="495" width="32" height="12" rx="3" fill="#222018" stroke="#3a3830" stroke-width="1"/>
+<path d="M221 518 L183 518" stroke="#1a1810" stroke-width="1.5"/>
+<line x1="208" y1="487" x2="218" y2="487" stroke="#5a5848" stroke-width="1"/>
+<line x1="209" y1="491" x2="219" y2="491" stroke="#5a5848" stroke-width="1"/>
+<line x1="209" y1="495" x2="220" y2="495" stroke="#5a5848" stroke-width="1"/>
+<!-- tread sole outline -->
+<path d="M119 520 L157 520" stroke="#0a0a08" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M183 520 L221 520" stroke="#0a0a08" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+
+</div><!-- /soldier-stage -->
+
+<div class="gear-name" id="gear-name"></div>
+```
+
+</div>
+
+<!-- RIGHT PANEL -->
+
+<div class="info-panel">
+<h2>Снаряжение</h2>
+
+```
+<div class="equipped-list" id="equipped-list">
+<div class="eq-item empty" id="eq-helmet"><div class="eq-dot"></div><span>Шлем: не надет</span></div>
+<div class="eq-item empty" id="eq-vest"><div class="eq-dot"></div><span>Броник: не надет</span></div>
+<div class="eq-item empty" id="eq-pants"><div class="eq-dot"></div><span>Брюки: по умолчанию</span></div>
+<div class="eq-item empty" id="eq-boots"><div class="eq-dot"></div><span>Обувь: базовая</span></div>
+</div>
+
+<h2 style="margin-top:8px">Характеристики</h2>
+
+<div>
+<div class="stat-row">
+<div class="stat-name">Защита</div>
+<div class="stat-bar-wrap"><div class="stat-bar" id="stat-defense" style="width:20%"></div></div>
+<div class="stat-val" id="val-defense">20%</div>
+</div>
+<div class="stat-row" style="margin-top:10px">
+<div class="stat-name">Мобильность</div>
+<div class="stat-bar-wrap"><div class="stat-bar" id="stat-mobility" style="width:90%; background:var(--accent2)"></div></div>
+<div class="stat-val" id="val-mobility">90%</div>
+</div>
+<div class="stat-row" style="margin-top:10px">
+<div class="stat-name">Скрытность</div>
+<div class="stat-bar-wrap"><div class="stat-bar" id="stat-stealth" style="width:50%; background:#6a8a6a"></div></div>
+<div class="stat-val" id="val-stealth">50%</div>
+</div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">↺ Сбросить</button>
+```
+
+</div>
+
+</div>
+
+<script>
+const state = { helmet: 'none', vest: 'none', pants: 'none', boots: 'none' };
+
+const names = {
+helmet: { none: 'Шлем: не надет', ssh68: 'Шлем: СШ-68', ratnik: 'Шлем: Ратник' },
+vest: { none: 'Броник: не надет', '6b2': 'Броник: 6Б2', '6b45': 'Броник: 6Б45' },
+pants: { none: 'Брюки: по умолчанию', camo: 'Брюки: Камуфляж', digital: 'Брюки: Цифра' },
+boots: { none: 'Обувь: базовая', kirza: 'Обувь: Кирзачи', tactical: 'Обувь: Тактические' }
+};
+
+const showNames = {
+helmet: { none: '', ssh68: 'СШ-68', ratnik: 'Шлем Ратник' },
+vest: { none: '', '6b2': 'Бронежилет 6Б2', '6b45': 'Бронежилет 6Б45' },
+pants: { none: '', camo: 'Камуфляж Лесной', digital: 'Цифровой Камуфляж' },
+boots: { none: '', kirza: 'Кирзовые Сапоги', tactical: 'Тактические Берцы' }
+};
+
+// Stats weights
+const statWeights = {
+defense: {
+helmet: { none:0, ssh68:10, ratnik:20 },
+vest: { none:0, '6b2':20, '6b45':35 },
+pants: { none:0, camo:5, digital:5 },
+boots: { none:0, kirza:3, tactical:7 }
+},
+mobility: {
+helmet: { none:0, ssh68:-3, ratnik:-8 },
+vest: { none:0, '6b2':-8, '6b45':-18 },
+pants: { none:0, camo:-2, digital:-3 },
+boots: { none:0, kirza:-3, tactical:-5 }
+},
+stealth: {
+helmet: { none:0, ssh68:5, ratnik:8 },
+vest: { none:0, '6b2':8, '6b45':12 },
+pants: { none:0, camo:15, digital:10 },
+boots: { none:0, kirza:-2, tactical:5 }
+}
+};
+
+function selectGear(btn) {
+const slot = btn.dataset.slot;
+const val = btn.dataset.val;
+
+// update buttons
+document.querySelectorAll(`[data-slot="${slot}"]`).forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+
+// hide old layer
+const oldLayer = document.getElementById(`${slot}-${state[slot]}`);
+if (oldLayer) oldLayer.classList.remove('visible');
+
+state[slot] = val;
+
+// show new layer
+const newLayer = document.getElementById(`${slot}-${val}`);
+if (newLayer) newLayer.classList.add('visible');
+
+// update equipped list
+const eq = document.getElementById(`eq-${slot}`);
+eq.querySelector('span').textContent = names[slot][val];
+if (val === 'none') eq.classList.add('empty');
+else eq.classList.remove('empty');
+
+// show name popup
+const gn = document.getElementById('gear-name');
+const sn = showNames[slot][val];
+if (sn) {
+gn.textContent = sn;
+gn.classList.add('show');
+setTimeout(() => gn.classList.remove('show'), 2000);
+}
+
+updateStats();
+}
+
+function updateStats() {
+const base = { defense: 20, mobility: 90, stealth: 50 };
+['defense','mobility','stealth'].forEach(stat => {
+let total = base[stat];
+['helmet','vest','pants','boots'].forEach(slot => {
+total += statWeights[stat][slot][state[slot]];
+});
+total = Math.max(0, Math.min(100, total));
+document.getElementById(`stat-${stat}`).style.width = total + '%';
+document.getElementById(`val-${stat}`).textContent = total + '%';
+});
+}
+
+function resetAll() {
+['helmet','vest','pants','boots'].forEach(slot => {
+const noneBtn = document.querySelector(`[data-slot="${slot}"][data-val="none"]`);
+if (noneBtn) selectGear(noneBtn);
+});
+}
+</script>
+
+</body>
+</html>
